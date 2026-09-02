@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JavaScript 非同期通信 LT</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
+    background: #0b0d10;
+    color: #fff;
+  }
+  .slide {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    padding: 7vh 8vw;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+  }
+  .slide.active { display: flex; }
+  h1, h2, p { margin: 0; }
+  h1 {
+    font-size: clamp(56px, 8vw, 120px);
+    line-height: 1.15;
+    letter-spacing: .02em;
+  }
+  h2 {
+    font-size: clamp(44px, 6vw, 90px);
+    line-height: 1.2;
+  }
+  p {
+    margin-top: 32px;
+    font-size: clamp(24px, 3vw, 46px);
+    line-height: 1.5;
+  }
+  .small {
+    font-size: clamp(18px, 2vw, 30px);
+    opacity: .75;
+  }
+  .accent { color: #7dd3fc; }
+  .muted { color: #a1a1aa; }
+  .big-arrow {
+    font-size: clamp(50px, 7vw, 100px);
+    margin: 8px 0;
+  }
+  .flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: clamp(30px, 4vw, 60px);
+    font-weight: 700;
+  }
+  .code {
+    margin-top: 38px;
+    padding: 28px 40px;
+    border-radius: 14px;
+    background: #161a20;
+    border: 1px solid #303640;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: clamp(18px, 2.2vw, 34px);
+    line-height: 1.65;
+    text-align: left;
+    max-width: 90vw;
+  }
+  .comment { color: #71717a; }
+  .keyword { color: #c4b5fd; }
+  .string { color: #86efac; }
+  .method { color: #7dd3fc; }
+  .number {
+    position: absolute;
+    right: 3vw;
+    bottom: 2.5vh;
+    font-size: 18px;
+    color: #71717a;
+  }
+  .hint {
+    position: absolute;
+    left: 3vw;
+    bottom: 2.5vh;
+    font-size: 16px;
+    color: #52525b;
+  }
+  .quote {
+    font-size: clamp(32px, 5vw, 72px);
+    font-weight: 800;
+    line-height: 1.35;
+  }
+  .box {
+    padding: 28px 42px;
+    border: 2px solid #52525b;
+    border-radius: 18px;
+    font-size: clamp(28px, 4vw, 58px);
+    font-weight: 700;
+    margin: 14px;
+  }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1100px;
+  }
+  .kbd {
+    display: inline-block;
+    padding: 6px 14px;
+    border: 1px solid #52525b;
+    border-bottom-width: 3px;
+    border-radius: 8px;
+    font-size: 18px;
+    color: #a1a1aa;
+  }
+  .end {
+    font-size: clamp(42px, 6vw, 88px);
+    font-weight: 900;
+    line-height: 1.25;
+  }
+</style>
+</head>
+<body>
+
+<section class="slide active">
+  <h1>JavaScriptで<br><span class="accent">非同期通信</span><br>やってみた</h1>
+  <p class="small">GitHub API × Fetch API</p>
+</section>
+
+<section class="slide">
+  <h2>今回、何を作った？</h2>
+  <div class="flow">
+    <div>GitHubの名前を入力</div>
+    <div class="big-arrow">↓</div>
+    <div>リポジトリを取得</div>
+    <div class="big-arrow">↓</div>
+    <div>画面に表示</div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="quote">「非同期通信」って<br>なんだ？</div>
+  <p>最初はここからよく分からなかった。</p>
+</section>
+
+<section class="slide">
+  <h2>ざっくり言うと</h2>
+  <p class="quote">通信の完了を<br><span class="accent">待たずに</span>処理を進める</p>
+</section>
+
+<section class="slide">
+  <h2>今回の主役</h2>
+  <h1 class="accent">fetch()</h1>
+  <p>JavaScriptからHTTPリクエストを送る</p>
+</section>
+
+<section class="slide">
+  <div class="quote">fetchは</div>
+  <p class="quote">「GitHubさん、<br>データください！」</p>
+</section>
+
+<section class="slide">
+  <h2>実際に送ってみる</h2>
+  <div class="code">
+    <span class="keyword">fetch</span>(<span class="string">`https://api.github.com/users/${githubName}/repos`</span>)
+  </div>
+  <p class="small">入力されたGitHub名をURLに入れてリクエスト</p>
+</section>
+
+<section class="slide">
+  <h2>返ってくるのは</h2>
+  <p class="quote">リポジトリ情報の<br><span class="accent">配列</span></p>
+  <div class="code">
+    [<br>
+    &nbsp;&nbsp;{ name: <span class="string">"rails_practice"</span> },<br>
+    &nbsp;&nbsp;{ name: <span class="string">"javascript"</span> }<br>
+    ]
+  </div>
+</section>
+
+<section class="slide">
+  <h2>じゃあ、どう使う？</h2>
+  <div class="code">
+    <span class="keyword">for</span> (repositoryInfo <span class="keyword">of</span> data) {<br>
+    &nbsp;&nbsp;console.log(repositoryInfo[<span class="string">"name"</span>])<br>
+    }
+  </div>
+  <p>データを1個ずつ取り出す</p>
+</section>
+
+<section class="slide">
+  <h2>そして画面に追加</h2>
+  <div class="code">
+    <span class="keyword">const</span> li = document.<span class="method">createElement</span>(<span class="string">"li"</span>)<br>
+    li.innerHTML = repositoryInfo[<span class="string">"name"</span>]<br>
+    repositorySpace.<span class="method">appendChild</span>(li)
+  </div>
+</section>
+
+<section class="slide">
+  <h2>全体の流れ</h2>
+  <div class="flow">
+    <div>入力</div>
+    <div>↓</div>
+    <div>クリック</div>
+    <div>↓</div>
+    <div class="accent">fetch</div>
+    <div>↓</div>
+    <div>GitHub API</div>
+    <div>↓</div>
+    <div>データ取得</div>
+    <div>↓</div>
+    <div>画面に表示</div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>今回わかったこと</h2>
+  <div class="grid">
+    <div class="box">querySelector</div>
+    <div class="box">addEventListener</div>
+    <div class="box accent">fetch</div>
+    <div class="box">.then</div>
+    <div class="box">for...of</div>
+    <div class="box">DOM操作</div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="end">でも正直……</div>
+  <div class="end accent" style="margin-top:35px;">めっちゃ難しかった。</div>
+  <p>😂</p>
+</section>
+
+<section class="slide">
+  <div class="end">JavaScriptから<br>外部APIに<br>アクセスできる。</div>
+  <p class="accent">これが今回の一番の収穫。</p>
+</section>
+
+<section class="slide">
+  <div class="end">次は<br>「非同期通信の裏側」<br>まで理解したい！</div>
+  <p class="small">ご清聴ありがとうございました</p>
+</section>
+
+<script>
+  const slides = document.querySelectorAll(".slide");
+  let current = 0;
+
+  function showSlide(index) {
+    if (index < 0 || index >= slides.length) return;
+    slides[current].classList.remove("active");
+    current = index;
+    slides[current].classList.add("active");
+    updateCounter();
+  }
+
+  function updateCounter() {
+    slides.forEach((slide, i) => {
+      const old = slide.querySelector(".number");
+      if (old) old.remove();
+      const number = document.createElement("div");
+      number.className = "number";
+      number.textContent = `${i + 1} / ${slides.length}`;
+      slide.appendChild(number);
+    });
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (["ArrowRight", "ArrowDown", " ", "Enter"].includes(event.key)) {
+      event.preventDefault();
+      showSlide(current + 1);
+    }
+    if (["ArrowLeft", "ArrowUp", "Backspace"].includes(event.key)) {
+      event.preventDefault();
+      showSlide(current - 1);
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (event.target.closest(".kbd")) return;
+    showSlide(current + 1);
+  });
+
+  updateCounter();
+</script>
+
+</body>
+</html>
